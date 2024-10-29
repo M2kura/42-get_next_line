@@ -3,16 +3,24 @@
 /*                                                        :::      ::::::::   */
 /*   get_next_line.h                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hteteria <hteteria@student.42.fr>          +#+  +:+       +#+        */
+/*   By: m2kura <m2kura@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/29 17:59:20 by hteteria          #+#    #+#             */
-/*   Updated: 2024/09/29 17:59:21 by hteteria         ###   ########.fr       */
+/*   Updated: 2024/10/26 16:33:18 by m2kura           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef GET_NEXT_LINE_H
 # define GET_NEXT_LINE_H
+# include <unistd.h>
+# include <stdlib.h>
+# include <stdio.h>
+# include <fcntl.h>
 
-char *get_next_line(int fd);
+# ifndef BUFFER_SIZE
+#  define BUFFER_SIZE 420
+# endif
+
+char	*get_next_line(int fd);
 
 #endif
