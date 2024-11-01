@@ -12,82 +12,103 @@
 
 #include "get_next_line.h"
 
-static int	find_nl_size(char *str)
+static size_t	ft_strlcpy(char *dst, const char *src, size_t dstsize)
 {
-	int	i;
+	size_t	i;
+	size_t	src_len;
 
-	i = 0;
-	if (!str)
+	if (!dst || !src)
 		return (0);
-	while (str[i] && str[i] != '\n')
-		i++;
-	return (i + 2);
-}
-
-static void	shift_buffer(int i, char *buffer)
-{
-	int	j;
-
-	j = 0;
-	if (i != BUFFER_SIZE)
+	i = 0;
+	src_len = ft_strlen(src);
+	if (dstsize > 0)
 	{
-		while (i + 1 != BUFFER_SIZE)
+		while (src[i] && i < dstsize - 1)
 		{
-			buffer[j] = buffer[i];
-			j++;
+			dst[i] = src[i];
 			i++;
 		}
+		dst[i] = '\0';
 	}
-	buffer[j] = '\0';
+	return (src_len);
 }
 
-static void	make_line(char *buffer, char *line)
+static void	shift_vault(char **vault, char *line)
 {
-	int	i;
+	char	*temp;
+
+	temp = NULL;
+	if (*vault && line)
+		temp = ft_strdup(*vault + ft_strlen(line));
+	free(*vault);
+	*vault = temp;
+}
+
+static void	get_line(char *vault, char **line)
+{
+	size_t	i;
+	char	*temp;
 
 	i = 0;
-	while (buffer[i] && buffer[i] != '\n')
-	{
-		line[i] = buffer[i];
+	if (!vault || !vault[i])
+		return ;
+	while (vault[i] && vault[i] != '\n')
 		i++;
+	temp = ft_substr(vault, 0, i + (vault[i] == '\n'));
+	if (temp)
+	{
+		*line = malloc((ft_strlen(temp) + 1) * sizeof(char));
+		if (!*line)
+		{
+			free(temp);
+			return ;
+		}
+		ft_strlcpy(*line, temp, ft_strlen(temp) + 1);
+		free(temp);
 	}
-	if (buffer[i] != '\n' && i == BUFFER_SIZE - 1)
-		line[i] = '\n';
-	else
-		i--;
-	line[i + 1] = '\0';
-	shift_buffer(i + 1, buffer);
+}
+
+static void	read_to_buff(char **vault, char *buff, int fd)
+{
+	int		count;
+	char	*temp;
+
+	count = 1;
+	while (count > 0 && *vault)
+	{
+		count = read(fd, buff, BUFFER_SIZE);
+		if (count == -1)
+		{
+			free(*vault);
+			*vault = NULL;
+			break ;
+		}
+		buff[count] = '\0';
+		temp = *vault;
+		*vault = ft_strjoin(temp, buff);
+		free(temp);
+		if (ft_strchr(buff, '\n'))
+			break ;
+	}
+	free(buff);
 }
 
 char	*get_next_line(int fd)
 {
-	static char	buffer[BUFFER_SIZE];
-	size_t		bytes_read;
+	static char	*vault;
+	char		*buff;
 	char		*line;
 
-	if (!buffer[0])
-	{
-		bytes_read = read(fd, buffer, BUFFER_SIZE - 1);
-		if (bytes_read <= 0)
-			return (NULL);
-		buffer[bytes_read] = '\0';
-	}
-	line = (char *)malloc(find_nl_size(buffer) * sizeof(char));
-	if (!line)
+	line = NULL;
+	if (fd < 0 || BUFFER_SIZE <= 0)
 		return (NULL);
-	make_line(buffer, line);
+	if (!vault)
+		vault = ft_strdup("");
+	buff = malloc((BUFFER_SIZE + 1) * sizeof(char));
+	if (!buff)
+		return (free(vault), vault = NULL, NULL);
+	read_to_buff(&vault, buff, fd);
+	get_line(vault, &line);
+	shift_vault(&vault, line);
 	return (line);
 }
-
-// int main() {
-// 	int fd = open("41_no_nl", O_RDONLY);
-// 	if (fd == -1)
-//         return 1;
-// 	char *line = get_next_line(fd);
-// 	while (line)
-// 	{
-// 		printf("%s", line);
-// 		line = get_next_line(fd);
-// 	}
-// 	return (0);
-// }
